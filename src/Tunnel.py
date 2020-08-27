@@ -22,7 +22,7 @@ class Tunnel(object):
         """Create a Raw ICMP socket for sending and receiving
 
         Returns:
-            TYPE: Raw ICMP socket
+            socket: Raw ICMP socket
         """
         # Doesn't handle errors, calling function should
         return socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
@@ -32,7 +32,7 @@ class Tunnel(object):
         """Create a TCP socket with given destination. Binds/Connects to ip depending on params
 
         Args:
-            dst (TYPE): (IP, Port) to connect to
+            dst ((IP, Port)): Destination to connect to
             server (bool, optional): If true we bind to dst instead of connecting
         """
         # Create reusable socket
@@ -64,11 +64,11 @@ class Server(Tunnel):
     Waits for ICMP packets, parses them and passes them forward as TCP
 
     Attributes:
-        dst (TYPE): (IP, Port) of pc we have a TCP connection with. This is the TCP server data
-        icmpSocket (TYPE): Socket that receives and sends the ICMP data
-        sockets (TYPE): List of sockets to wait for data for them
-        src (TYPE): (Ip, Port) of pc that is initializing the TCP connection over the tunnel
-        tcpSocket (TYPE): Socket that is connected to the destination TCP
+        dst ((IP, Port)): Destination of pc we have a TCP connection with. This is the TCP server data
+        icmpSocket (socket): Socket that receives and sends the ICMP data
+        sockets (list): List of sockets to wait for data for them
+        src ((Ip, Port)): Destination of pc that is initializing the TCP connection over the tunnel
+        tcpSocket (socket): Socket that is connected to the destination TCP
     """
 
     def __init__(self):
@@ -85,10 +85,7 @@ class Server(Tunnel):
         Reads the ICMP packet and forwards the payload as a TCP packet to the TCP server.
 
         Args:
-            socket (TYPE): ICMP socket that has data to read from
-
-        Returns:
-            TYPE: Nothing
+            socket (socket): ICMP socket that has data to read from
         """
         # Read and parse data
         packet, address = socket.recvfrom(ICMP_BUFFER_SIZE)
@@ -126,7 +123,7 @@ class Server(Tunnel):
         Reads the packet and forwards it over ICMP to the client ICMP tunnel.
 
         Args:
-            sock (TYPE): Socket that we got the data from
+            sock (socket): Socket that we got the data from
         """
         # Read tcp data
         data = sock.recv(TCP_BUFFER_SIZE)
@@ -141,20 +138,20 @@ class Client(object):
     """ICMP Tunnel Client.
 
     Attributes:
-        dst (TYPE): (IP, Port) of the server TCP
-        icmpSocket (TYPE): Socket that receives and sends the ICMP data
-        proxy (TYPE): IP address of the ICMP tunnel server
-        sockets (TYPE): List of sockets to wait for data for them
-        tcpSocket (TYPE): Socket that is connected to the destination TCP
+        dst ((IP, Port)): Destination of the server TCP
+        icmpSocket (socket): Socket that receives and sends the ICMP data
+        proxy (string): IP address of the ICMP tunnel server
+        sockets (list): List of sockets to wait for data for them
+        tcpSocket (socket): Socket that is connected to the destination TCP
     """
 
     def __init__(self, proxy, sock, dst):
         """Creates a ICMP tunnel client that connects to the ICMP tunnel server and sends its tcp there.
 
         Args:
-            proxy (TYPE): IP address of the ICMP tunnel server
-            sock (TYPE): The tcp socket that started the tunnel
-            dst (TYPE): (IP, Port) of the server TCP
+            proxy (string): IP address of the ICMP tunnel server
+            sock (socket): The tcp socket that started the tunnel
+            dst ((IP, Port)): Destination of the server TCP
         """
         self.proxy = proxy
         self.tcpSocket = sock
@@ -167,10 +164,7 @@ class Client(object):
         Reads the ICMP packet and forwards the payload as a TCP packet to the TCP client.
 
         Args:
-            sock (TYPE): Our socket that received the ICMP data
-
-        Returns:
-            TYPE: Nothing
+            sock (socket): Our socket that received the ICMP data
         """
 
         # Get the data and try to parse it
@@ -191,7 +185,7 @@ class Client(object):
         Reads the packet and forwards it over ICMP to the server ICMP tunnel.
 
         Args:
-            sock (TYPE): Socket that we got the data from
+            sock (socket): Socket that we got the data from
         """
         data = sock.recv(TCP_BUFFER_SIZE)
 
@@ -210,21 +204,21 @@ class ClientProxy(Tunnel):
     """Waits for an incoming TCP connection and opens the connection to the server when received.
 
     Attributes:
-        dst (TYPE): (IP, Port) of the TCP server we want to connect to
-        local (TYPE): (IP, Port) of the requesting TCP client
-        proxy (TYPE): IP of the ICMP tunnel server
-        tcpSocket (TYPE): Opened socket with the TCP client
+        dst ((IP, Port)): Destination of the TCP server we want to connect to
+        local ((IP, Port)): Destination of the requesting TCP client
+        proxy (string): IP of the ICMP tunnel server
+        tcpSocket (socket): Opened socket with the TCP client
     """
 
     def __init__(proxy, localHost, localPort, dstHost, dstPort):
         """Proxy of the Client Class. Creates a TCP connection and passes it to the client to handle the data
 
         Args:
-            proxy (TYPE): IP of the ICMP tunnel server
-            localHost (TYPE): Our TCP IP to bind to
-            localPort (TYPE): Our TCP port to bind to
-            dstHost (TYPE): Server TCP IP that we want to connect to
-            dstPort (TYPE): Server TCP IP that we want to connect to
+            proxy (string): IP of the ICMP tunnel server
+            localHost (string): Our TCP IP to bind to
+            localPort (int): Our TCP port to bind to
+            dstHost (string): Server TCP IP that we want to connect to
+            dstPort (int): Server TCP IP that we want to connect to
         """
         self.proxy = proxy
         self.local = (localHost, localPort)
