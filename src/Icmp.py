@@ -6,6 +6,7 @@ Attributes:
 """
 import socket
 import struct
+from Logger import logger
 
 ICMP_ECHO_REPLY = 0
 ICMP_ECHO_REQUEST = 8
@@ -62,6 +63,8 @@ class IcmpPacket(object):
         Returns:
             bytearray: Serialized ICMP packet data
         """
+        logger.Log("DEBUG", "Creating ICMP packet")
+
         packStr = self.ICMP_HEADER
         packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1]]
 
@@ -97,6 +100,8 @@ class IcmpPacket(object):
         if payloadSize > 0:
             payload = struct.unpack("{}s".format(payloadSize), rawIcmpPacket[IcmpPacket.ICMP_HEADER_SIZE:])[0]
 
+
+        logger.Log("DEBUG", "Parsing ICMP packet, payload size {}".format(payloadSize))
 
         # Read the packet data
         type, code, checksum, id, sequence, dstIp, dstPort = struct.unpack(IcmpPacket.ICMP_HEADER,   rawIcmpPacket[:IcmpPacket.ICMP_HEADER_SIZE])

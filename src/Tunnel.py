@@ -7,6 +7,7 @@ Attributes:
 import socket
 import select
 import Icmp
+from Logger import logger
 
 TCP_BUFFER_SIZE = 1024
 ICMP_BUFFER_SIZE = 65565
@@ -26,6 +27,7 @@ class Tunnel(object):
             socket: Raw ICMP socket
         """
         # Doesn't handle errors, calling function should
+        logger.Log("DEBUG", "ICMP socket created")
         return socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
 
     @staticmethod
@@ -36,6 +38,7 @@ class Tunnel(object):
             dst ((IP, Port)): Destination to connect to
             server (bool, optional): If true we bind to dst instead of connecting
         """
+        logger.Log("DEBUG", "TCP socket created on {}.{}".format(dst[0], dst[1]))
         # Create reusable socket
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -57,7 +60,6 @@ class Tunnel(object):
                 if sock.proto == socket.IPPROTO_ICMP:
                     self.HandleIcmp(sock)
                 else:
-                    # TODO: change to dict of functions if possible
                     self.HandleTcp(sock)
 
 class Server(Tunnel):
@@ -96,8 +98,7 @@ class Server(Tunnel):
         try:
             packet = Icmp.IcmpPacket.Parse(packet)
         except Exception as x:
-            print("Failed parsing packet")
-            raise(x)
+            logger.Log("FATAL", "Failed parsing packet")
             return
 
         self.src = address[0]
@@ -105,7 +106,7 @@ class Server(Tunnel):
 
         # Skip our packets
         if packet.type == Icmp.ICMP_ECHO_REPLY and packet.code == 0:
-            print("Dropping packet")
+            logger.Log("DEBUG", "Failed parsing packet")
             return
 
         # Close requested
@@ -113,15 +114,16 @@ class Server(Tunnel):
             self.sockets.remove(self.tcpSocket)
             self.tcpSocket.close()
             self.tcpSocket = None
+            logger.Log("INFO", "Client closed")
             return
 
         # Create socket if it doesnt exist
         if not self.tcpSocket:
             self.tcpSocket = self.CreateTcpSocket(self.dst)
             self.sockets.append(self.tcpSocket)
+            logger.Log("INFO", "Client joined")
 
         # Send the packet
-        print(packet.payload)
         self.tcpSocket.send(packet.payload)
 
     def HandleTcp(self, sock):
@@ -202,6 +204,7 @@ class Client(Tunnel):
 
         # Connection closed, no data
         if code == 1:
+            logger.Log("INFO", "Connection closed")
             exit()
 
 
@@ -235,6 +238,7 @@ class ClientProxy(Tunnel):
         """Runs the proxy.
         Waits for a TCP connection and passes it forward to the Client class to parse
         """
+        logger.Log("INFO", "Waiting for TCP connection")
         self.tcpSocket.listen(1)
         sock, addr = self.tcpSocket.accept()
         client = Client(self.proxy, sock, self.dst)
