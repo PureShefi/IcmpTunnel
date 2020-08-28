@@ -62,11 +62,11 @@ class IcmpPacket(object):
         Returns:
             bytearray: Serialized ICMP packet data
         """
-        packStr = ICMP_HEADER
-        packArgs = [self.type, self.code, 0, self.id, self.sequence, self.inet_aton(self.dst[0]), self.dst[1]]
+        packStr = self.ICMP_HEADER
+        packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1]]
 
         # Add the payload
-        if len(payload) > 0:
+        if len(self.payload) > 0:
             packStr += "{}s".format(len(self.payload))
             packArgs.append(self.payload)
 
@@ -86,24 +86,24 @@ class IcmpPacket(object):
         Returns:
             IcmpPacket: Parsed packet
         """
-        rawIpPacket, rawIcmpPacket = packet[:IP_HEADER_SIZE], packet[IP_HEADER_SIZE:]
-        ipPacket = struct.unpack(IP_HEADER, rawIpPacket)
+        rawIpPacket, rawIcmpPacket = packet[:IcmpPacket.IP_HEADER_SIZE], packet[IcmpPacket.IP_HEADER_SIZE:]
+        ipPacket = struct.unpack(IcmpPacket.IP_HEADER, rawIpPacket)
 
         srcIp = ipPacket[8]
 
         # Get the payload
         payload = ""
-        payloadSize = len(rawIcmpPacket) - ICMP_HEADER_SIZE
+        payloadSize = len(rawIcmpPacket) - IcmpPacket.ICMP_HEADER_SIZE
         if payloadSize > 0:
-            payload = stuct.unpack("{}s".format(payloadSize), rawIcmpPacket[ICMP_HEADER_SIZE:])
+            payload = struct.unpack("{}s".format(payloadSize), rawIcmpPacket[IcmpPacket.ICMP_HEADER_SIZE:])[0]
 
 
         # Read the packet data
-        type, code, checksum, id, sequence, dstIp, dstPort = stuct.unpack(rawIcmpPacket[:ICMP_HEADER_SIZE])
+        type, code, checksum, id, sequence, dstIp, dstPort = struct.unpack(IcmpPacket.ICMP_HEADER,   rawIcmpPacket[:IcmpPacket.ICMP_HEADER_SIZE])
 
         # Convert to net data
         srcIp = socket.inet_ntoa(srcIp)
-        dst = (socket.inet_ntoa(dstIp) , port)
+        dst = (socket.inet_ntoa(dstIp), dstPort)
 
         return cls(type, code, checksum, id, sequence, payload, srcIp, dst)
 
@@ -119,15 +119,15 @@ class IcmpPacket(object):
             int: Calculated checksum
         """
         checksum = 0
-        length = (len(packet) / 2) * 2
+        length = (len(packet) // 2) * 2
 
         # Sum everything
         for index in range(0, length, 2):
-            checksum = (checksum + (ord(packet[index]) +  ord(packet[index]) * 256)) & 0XFFFFFFFF
+            checksum = (checksum + (packet[index] +  packet[index + 1]) * 256) & 0XFFFFFFFF
 
         # We have a leftover byte
         if length < len(packet):
-            checksum = (checksum + ord(packet[len(packet) - 1])) & 0XFFFFFFFF
+            checksum = (checksum + packet[len(packet) - 1]) & 0XFFFFFFFF
 
         # Calculate the data
         checksum = (checksum >> 16) + (checksum & 0xFFFF)

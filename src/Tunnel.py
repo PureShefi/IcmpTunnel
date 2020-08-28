@@ -6,6 +6,7 @@ Attributes:
 """
 import socket
 import select
+import Icmp
 
 TCP_BUFFER_SIZE = 1024
 ICMP_BUFFER_SIZE = 65565
@@ -45,6 +46,8 @@ class Tunnel(object):
         else:
             sock.connect(dst)
 
+        return sock
+
     def Run(self):
         """Run on sockets on we receive data on one
         """
@@ -52,10 +55,10 @@ class Tunnel(object):
             socketsRead, _, _ = select.select(self.sockets, [], [])
             for sock in socketsRead:
                 if sock.proto == socket.IPPROTO_ICMP:
-                    self.HandleIcmp(socket)
+                    self.HandleIcmp(sock)
                 else:
                     # TODO: change to dict of functions if possible
-                    self.HandleTcp(socket)
+                    self.HandleTcp(sock)
 
 class Server(Tunnel):
 
@@ -92,19 +95,21 @@ class Server(Tunnel):
 
         try:
             packet = Icmp.IcmpPacket.Parse(packet)
-        except:
+        except Exception as x:
             print("Failed parsing packet")
+            raise(x)
             return
 
         self.src = address[0]
         self.dst = packet.dst
 
         # Skip our packets
-        if packet.type == Icmp.ICMP_ECHO_REQUEST and packet.code == 0:
+        if packet.type == Icmp.ICMP_ECHO_REPLY and packet.code == 0:
+            print("Dropping packet")
             return
 
         # Close requested
-        if packet.type == Icmp.ICMP_ECHO_REPLY and packet.code == 1:
+        if packet.type == Icmp.ICMP_ECHO_REQUEST and packet.code == 1:
             self.sockets.remove(self.tcpSocket)
             self.tcpSocket.close()
             self.tcpSocket = None
@@ -116,7 +121,8 @@ class Server(Tunnel):
             self.sockets.append(self.tcpSocket)
 
         # Send the packet
-        self.tcpSocket.send(packet.data)
+        print(packet.payload)
+        self.tcpSocket.send(packet.payload)
 
     def HandleTcp(self, sock):
         """Handle a packet from the TCP connection.
@@ -130,10 +136,10 @@ class Server(Tunnel):
 
         # Wrap the data with an ICMP packet and send it to the client
         packet = Icmp.IcmpPacket(Icmp.ICMP_ECHO_REPLY, 0, 0, 0, 0, data, self.src, self.dst)
-        self.icmpSocket.sendTo(packet.Create(), (self.src, 0))
+        self.icmpSocket.sendto(packet.Create(), (self.src, 0))
 
 
-class Client(object):
+class Client(Tunnel):
 
     """ICMP Tunnel Client.
 
@@ -178,7 +184,7 @@ class Client(object):
 
         # We send ICMP echo requests so ignore them
         if packet.type != Icmp.ICMP_ECHO_REQUEST:
-            self.tcpSocket.send(packet.data)
+            self.tcpSocket.send(packet.payload)
 
     def HandleTcp(self, sock):
         """Handle a packet from the TCP connection.
@@ -210,7 +216,7 @@ class ClientProxy(Tunnel):
         tcpSocket (socket): Opened socket with the TCP client
     """
 
-    def __init__(proxy, localHost, localPort, dstHost, dstPort):
+    def __init__(self, proxy, localHost, localPort, dstHost, dstPort):
         """Proxy of the Client Class. Creates a TCP connection and passes it to the client to handle the data
 
         Args:
@@ -229,9 +235,9 @@ class ClientProxy(Tunnel):
         """Runs the proxy.
         Waits for a TCP connection and passes it forward to the Client class to parse
         """
-        tcpSocket.listen(1)
-        sock, addr = tcpSocket.accept()
-        client = Client(proxy, sock, dst)
+        self.tcpSocket.listen(1)
+        sock, addr = self.tcpSocket.accept()
+        client = Client(self.proxy, sock, self.dst)
         client.Run()
 
 

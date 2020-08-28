@@ -18,11 +18,11 @@ def main():
 
     else:
         ClientProxy(
-                args["proxy-host"],
-                args["local-host"],
-                args["local-port"],
-                args["destination-host"],
-                args["destination-port"]
+                args.proxy_host,
+                args.local_host,
+                args.local_port,
+                args.destination_host,
+                args.destination_port
             ).Run()
 
 if __name__ == "__main__":
