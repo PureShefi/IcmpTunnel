@@ -98,11 +98,15 @@ class Server(Tunnel):
         try:
             packet = Icmp.IcmpPacket.Parse(packet)
         except Exception as x:
-            logger.Log("FATAL", "Failed parsing packet")
+            logger.Log("DEBUG", "Failed parsing packet")
             return
 
         self.src = address[0]
         self.dst = packet.dst
+
+        # If this is not an IcmpTunnelPacket ignore it
+        if packet.magic != Icmp.IcmpPacket.MAGIC:
+            return
 
         # Skip our packets
         if packet.type == Icmp.ICMP_ECHO_REPLY and packet.code == 0:
@@ -182,6 +186,10 @@ class Client(Tunnel):
             packet = Icmp.IcmpPacket.Parse(data)
         except:
             # Might not be our packet so the parsing will fail
+            return
+
+        # If this is not an IcmpTunnelPacket ignore it
+        if packet.magic != Icmp.IcmpPacket.MAGIC:
             return
 
         # We send ICMP echo requests so ignore them

@@ -3,7 +3,7 @@ from Tunnel import *
 from Logger import logger
 
 def main():
-    parser = argparse.ArgumentParser(description="ICMP Tunnel, send TCP over ICMP", formatter_class=argparse.RawTextHelpFormatter, )
+    parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="ICMP Tunnel, send TCP over ICMP")
 
     # Add server or client
     parser.add_argument("type", choices=["client", "server"], help="client - Run the client proxy (No flags needed)\nserver - Run the server proxy (All flags needed)")
@@ -12,7 +12,7 @@ def main():
     parser.add_argument("-lp", "--local-port", type=int, help="Local port for incoming TCP connections")
     parser.add_argument("-dh", "--destination-host", help="Remote IP to send TCP connection to")
     parser.add_argument("-dp", "--destination-port", type=int, help="Remote port to send TCP connection to")
-    parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Print also debug messages")
+    parser.add_argument("-v", "--verbose", default=False, action="store_true", help="Print debug messages")
     args = parser.parse_args()
 
     # Set the logger verbosity

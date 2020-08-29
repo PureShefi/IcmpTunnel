@@ -24,6 +24,8 @@ class IcmpPacket(object):
         id (int): ICMP packet id
         IP_HEADER (str): IP packet header parsing string
         IP_HEADER_SIZE (int): IP header size
+        MAGIC (int): Magic to validate its a tunnel packet
+        magic (int): Magic to validate its a tunnel packet
         payload (bytearray): ICMP packet payload
         sequence (int): ICMP packet sequence
         srcIp (TYPE): Senders Ip
@@ -31,22 +33,25 @@ class IcmpPacket(object):
     """
 
     IP_HEADER =  "!BBHHHBBH4s4s"
-    ICMP_HEADER =  "!BBHHH4sH"
+    ICMP_HEADER =  "!BBHHH4sHL"
+    MAGIC = 0x24426886
 
     IP_HEADER_SIZE = struct.calcsize(IP_HEADER)
     ICMP_HEADER_SIZE = struct.calcsize(ICMP_HEADER)
 
-    def __init__(self, type, code, checksum, id, sequence, payload, srcIp, dst = (None, None)):
+    def __init__(self, type, code, checksum, id, sequence, payload, srcIp, dst = (None, None), magic = IcmpPacket.MAGIC):
         """Holds information about an ICMP packet
+
         Args:
-            type (TYPE): ICMP packet type
-            code (TYPE): ICMP packet code
-            checksum (TYPE): ICMP packet checksum
-            id (TYPE): ICMP packet id
-            sequence (TYPE): ICMP packet sequence
-            payload (TYPE): ICMP packet payload
+            type (int): ICMP packet type
+            code (int): ICMP packet code
+            checksum (int): ICMP packet checksum
+            id (int): ICMP packet id
+            sequence (int): ICMP packet sequence
+            payload (bytearray): ICMP packet payload
             srcIp (IP): Senders Ip
             dst ((IP, Port), optional): Destination of the tcp packet that will receive the packet
+            magic (int, optional): magic number for the IcmpTunnel
         """
         self.type = type
         self.code = code
@@ -56,6 +61,7 @@ class IcmpPacket(object):
         self.payload = payload
         self.srcIp = srcIp
         self.dst = dst
+        self.magic = magic
 
     def Create(self):
         """Creates a network ready ICMP packet from the saved data
@@ -66,7 +72,7 @@ class IcmpPacket(object):
         logger.Log("DEBUG", "Creating ICMP packet")
 
         packStr = self.ICMP_HEADER
-        packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1]]
+        packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1], socket.inet_aton(self.magic)]
 
         # Add the payload
         if len(self.payload) > 0:
@@ -104,13 +110,14 @@ class IcmpPacket(object):
         logger.Log("DEBUG", "Parsing ICMP packet, payload size {}".format(payloadSize))
 
         # Read the packet data
-        type, code, checksum, id, sequence, dstIp, dstPort = struct.unpack(IcmpPacket.ICMP_HEADER,   rawIcmpPacket[:IcmpPacket.ICMP_HEADER_SIZE])
+        type, code, checksum, id, sequence, dstIp, dstPort, magic = struct.unpack(IcmpPacket.ICMP_HEADER, rawIcmpPacket[:IcmpPacket.ICMP_HEADER_SIZE])
 
         # Convert to net data
         srcIp = socket.inet_ntoa(srcIp)
         dst = (socket.inet_ntoa(dstIp), dstPort)
+        magic = socket.inet_ntoa(srcIp)
 
-        return cls(type, code, checksum, id, sequence, payload, srcIp, dst)
+        return cls(type, code, checksum, id, sequence, payload, srcIp, dst, magic)
 
 
     @staticmethod
