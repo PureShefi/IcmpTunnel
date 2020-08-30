@@ -249,6 +249,7 @@ class ClientProxy(Tunnel):
         logger.Log("INFO", "Waiting for TCP connection")
         self.tcpSocket.listen(1)
         sock, addr = self.tcpSocket.accept()
+        logger.Log("INFO", "Received TCP connection")
         client = Client(self.proxy, sock, self.dst)
         client.Run()
 

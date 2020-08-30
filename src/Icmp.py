@@ -39,7 +39,7 @@ class IcmpPacket(object):
     IP_HEADER_SIZE = struct.calcsize(IP_HEADER)
     ICMP_HEADER_SIZE = struct.calcsize(ICMP_HEADER)
 
-    def __init__(self, type, code, checksum, id, sequence, payload, srcIp, dst = (None, None), magic = IcmpPacket.MAGIC):
+    def __init__(self, type, code, checksum, id, sequence, payload, srcIp, dst = (None, None), magic = MAGIC):
         """Holds information about an ICMP packet
 
         Args:
@@ -72,7 +72,7 @@ class IcmpPacket(object):
         logger.Log("DEBUG", "Creating ICMP packet")
 
         packStr = self.ICMP_HEADER
-        packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1], socket.inet_aton(self.magic)]
+        packArgs = [self.type, self.code, 0, self.id, self.sequence, socket.inet_aton(self.dst[0]), self.dst[1], self.magic]
 
         # Add the payload
         if len(self.payload) > 0:
@@ -115,7 +115,6 @@ class IcmpPacket(object):
         # Convert to net data
         srcIp = socket.inet_ntoa(srcIp)
         dst = (socket.inet_ntoa(dstIp), dstPort)
-        magic = socket.inet_ntoa(srcIp)
 
         return cls(type, code, checksum, id, sequence, payload, srcIp, dst, magic)
 
