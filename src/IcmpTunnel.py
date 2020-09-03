@@ -1,8 +1,32 @@
+"""ICMP tunnel
+
+Runs TCP over ICMP packets.
+"""
 import argparse
 from Tunnel import *
 from Logger import logger
 
 def main():
+    """ICMP Tunnel, send TCP over ICMP
+
+positional arguments:
+  {client,server}       client - Run the client proxy (No flags needed)
+                        server - Run the server proxy (All flags needed)
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -p PROXY_HOST, --proxy-host PROXY_HOST
+                        IP of the server tunnel
+  -lh LOCAL_HOST, --local-host LOCAL_HOST
+                        Local IP for incoming TCP connections
+  -lp LOCAL_PORT, --local-port LOCAL_PORT
+                        Local port for incoming TCP connections
+  -dh DESTINATION_HOST, --destination-host DESTINATION_HOST
+                        Remote IP to send TCP connection to
+  -dp DESTINATION_PORT, --destination-port DESTINATION_PORT
+                        Remote port to send TCP connection to
+  -v, --verbose         Print debug messages
+    """
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="ICMP Tunnel, send TCP over ICMP")
 
     # Add server or client
