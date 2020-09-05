@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 class Logger(object):
 
     """Base print loggging class
