@@ -135,7 +135,7 @@ class IcmpPacket(object):
 
         # Sum everything
         for index in range(0, length, 2):
-            checksum = (checksum + (packet[index] +  packet[index + 1]) * 256) & 0XFFFFFFFF
+            checksum = (checksum + packet[index] +  (packet[index + 1] * 256)) & 0XFFFFFFFF
 
         # We have a leftover byte
         if length < len(packet):
@@ -148,3 +148,4 @@ class IcmpPacket(object):
         answer = ~checksum & 0xFFFF
         answer = (answer >> 8) | ((answer << 8) & 0xFF00)
         return answer
+

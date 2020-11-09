@@ -11,8 +11,8 @@ def main():
     """ICMP Tunnel, send TCP over ICMP
 
 positional arguments:
-  {client,server}       client - Run the client proxy (No flags needed)
-                        server - Run the server proxy (All flags needed)
+  {client,server}       client - Run the client proxy (All flags needed)
+                        server - Run the server proxy (No flags needed)
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -31,7 +31,7 @@ optional arguments:
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="ICMP Tunnel, send TCP over ICMP")
 
     # Add server or client
-    parser.add_argument("type", choices=["client", "server"], help="client - Run the client proxy (No flags needed)\nserver - Run the server proxy (All flags needed)")
+    parser.add_argument("type", choices=["client", "server"], help="client - Run the client proxy (All flags needed)\nserver - Run the server proxy (No flags needed)")
     parser.add_argument("-p", "--proxy-host", help="IP of the server tunnel")
     parser.add_argument("-lh", "--local-host", help="Local IP for incoming TCP connections")
     parser.add_argument("-lp", "--local-port", type=int, help="Local port for incoming TCP connections")
